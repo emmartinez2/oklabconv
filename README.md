@@ -57,12 +57,18 @@ than aborting the whole run.
 - `--to srgb` expects OKLab triples, either as `oklab(L a b)` or as
   three bare numbers separated by spaces or commas.
 
+## Running tests
+
+```
+$ python -m unittest discover
+```
+
 ## Status
 
 Early. The core sRGB <-> OKLab math is implemented and matches the
-reference values published alongside the OKLab color space. Not yet
-covered: OKLCH (polar OKLab), gamut clipping options, and a proper
-test suite.
+reference values published alongside the OKLab color space, and is
+covered by unit tests. Not yet covered: OKLCH (polar OKLab) and
+gamut clipping options.
 
 ## License
 

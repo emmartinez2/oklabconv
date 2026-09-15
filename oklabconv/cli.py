@@ -6,7 +6,14 @@ import argparse
 import sys
 from typing import Iterable, Iterator
 
-from .convert import hex_to_rgb, oklab_to_rgb, rgb_to_hex, rgb_to_oklab
+from .convert import (
+    hex_to_rgb,
+    oklab_to_oklch,
+    oklab_to_rgb,
+    oklch_to_oklab,
+    rgb_to_hex,
+    rgb_to_oklab,
+)
 
 
 def read_lines(paths: list[str]) -> Iterator[str]:
@@ -46,6 +53,21 @@ def format_oklab(L: float, a: float, b: float) -> str:
     return f"oklab({L:.4f} {a:.4f} {b:.4f})"
 
 
+def parse_oklch(text: str) -> tuple[float, float, float]:
+    text = text.strip()
+    if text.lower().startswith("oklch(") and text.endswith(")"):
+        text = text[len("oklch("):-1]
+    parts = text.replace(",", " ").split()
+    if len(parts) != 3:
+        raise ValueError(f"expected 3 numbers for OKLCH, got: {text!r}")
+    L, C, H = (float(p) for p in parts)
+    return L, C, H
+
+
+def format_oklch(L: float, C: float, H: float) -> str:
+    return f"oklch({L:.4f} {C:.4f} {H:.2f})"
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="oklabconv",
@@ -53,9 +75,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--to",
-        choices=("oklab", "srgb"),
+        choices=("oklab", "oklch", "srgb"),
         required=True,
-        help="target format; input is assumed to be the other one",
+        help=(
+            "target format; --to oklab/oklch expects sRGB hex input, "
+            "--to srgb expects an oklab(...) or oklch(...) line"
+        ),
     )
     parser.add_argument(
         "files",
@@ -73,8 +98,14 @@ def main(argv: list[str] | None = None) -> int:
             if args.to == "oklab":
                 r, g, b = hex_to_rgb(line)
                 print(format_oklab(*rgb_to_oklab(r, g, b)))
+            elif args.to == "oklch":
+                r, g, b = hex_to_rgb(line)
+                print(format_oklch(*oklab_to_oklch(*rgb_to_oklab(r, g, b))))
             else:
-                L, a, b = parse_oklab(line)
+                if line.strip().lower().startswith("oklch("):
+                    L, a, b = oklch_to_oklab(*parse_oklch(line))
+                else:
+                    L, a, b = parse_oklab(line)
                 print(rgb_to_hex(*oklab_to_rgb(L, a, b)))
         except ValueError as exc:
             print(f"oklabconv: skipping {line!r}: {exc}", file=sys.stderr)

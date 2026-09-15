@@ -6,6 +6,8 @@ The matrices below are the ones published by Bjoern Ottosson when he
 introduced OKLab; they are what browsers use for CSS Color 4's oklab().
 """
 
+import math
+
 # linear sRGB -> LMS
 _M1 = (
     (0.4122214708, 0.5363325363, 0.0514459929),
@@ -80,3 +82,16 @@ def oklab_to_rgb(L: float, a: float, b: float) -> tuple[int, int, int]:
     linear = _apply_matrix(_M1_INV, lms)
     srgb = tuple(linear_to_srgb(c) * 255.0 for c in linear)
     return tuple(min(255, max(0, round(c))) for c in srgb)
+
+
+def oklab_to_oklch(L: float, a: float, b: float) -> tuple[float, float, float]:
+    """Convert to the polar (cylindrical) form of OKLab: lightness,
+    chroma (distance from the neutral axis), and hue in degrees."""
+    C = math.hypot(a, b)
+    H = math.degrees(math.atan2(b, a)) % 360.0
+    return L, C, H
+
+
+def oklch_to_oklab(L: float, C: float, H: float) -> tuple[float, float, float]:
+    angle = math.radians(H)
+    return L, C * math.cos(angle), C * math.sin(angle)

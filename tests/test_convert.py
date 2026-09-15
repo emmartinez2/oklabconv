@@ -3,7 +3,9 @@ import unittest
 from oklabconv.convert import (
     hex_to_rgb,
     linear_to_srgb,
+    oklab_to_oklch,
     oklab_to_rgb,
+    oklch_to_oklab,
     rgb_to_hex,
     rgb_to_oklab,
     srgb_to_linear,
@@ -115,6 +117,46 @@ class RgbOklabTests(unittest.TestCase):
         for component in (r, g, b):
             self.assertGreaterEqual(component, 0)
             self.assertLessEqual(component, 255)
+
+
+class OklabOklchTests(unittest.TestCase):
+    def test_neutral_gray_has_zero_chroma(self):
+        L, C, H = oklab_to_oklch(0.5, 0.0, 0.0)
+        self.assertAlmostEqual(L, 0.5)
+        self.assertAlmostEqual(C, 0.0)
+        self.assertAlmostEqual(H, 0.0)
+
+    def test_red_matches_published_reference_value(self):
+        # derived from the published OKLab reference value for red:
+        # C = hypot(a, b), H = atan2(b, a) in degrees.
+        L, C, H = oklab_to_oklch(0.6280, 0.2249, 0.1258)
+        self.assertAlmostEqual(C, 0.2577, places=3)
+        self.assertAlmostEqual(H, 29.22, places=1)
+
+    def test_hue_wraps_into_zero_to_360(self):
+        _, _, H = oklab_to_oklch(0.5, -0.1, -0.1)
+        self.assertGreaterEqual(H, 0.0)
+        self.assertLess(H, 360.0)
+
+    def test_round_trips_through_oklab(self):
+        for L, a, b in (
+            (0.5, 0.1, -0.05),
+            (0.8, -0.15, 0.2),
+            (0.2, 0.0, 0.0),
+            (0.6280, 0.2249, 0.1258),
+        ):
+            L2, a2, b2 = oklch_to_oklab(*oklab_to_oklch(L, a, b))
+            self.assertAlmostEqual(L, L2, places=9)
+            self.assertAlmostEqual(a, a2, places=9)
+            self.assertAlmostEqual(b, b2, places=9)
+
+    def test_full_round_trip_through_rgb(self):
+        for hexcode in ("#ff0000", "#3366ff", "#123456", "#abcdef"):
+            r, g, b = hex_to_rgb(hexcode)
+            L, C, H = oklab_to_oklch(*rgb_to_oklab(r, g, b))
+            r2, g2, b2 = oklab_to_rgb(*oklch_to_oklab(L, C, H))
+            for original, restored in zip((r, g, b), (r2, g2, b2)):
+                self.assertLessEqual(abs(original - restored), 1)
 
 
 if __name__ == "__main__":

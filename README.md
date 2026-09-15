@@ -27,6 +27,22 @@ $ echo "oklab(0.6280 0.2249 0.1258)" | python -m oklabconv --to srgb
 #ff0000
 ```
 
+Convert hex to OKLCH, the polar (lightness/chroma/hue) form of OKLab
+used by CSS Color 4's `oklch()`:
+
+```
+$ echo "#ff0000" | python -m oklabconv --to oklch
+oklch(0.6280 0.2576 29.23)
+```
+
+`--to srgb` accepts either `oklab(...)` or `oklch(...)` lines, and
+picks the right inverse conversion automatically:
+
+```
+$ echo "oklch(0.6280 0.2576 29.23)" | python -m oklabconv --to srgb
+#ff0000
+```
+
 Read from one or more files instead of stdin, one color per line:
 
 ```
@@ -52,10 +68,12 @@ than aborting the whole run.
 
 ## Input formats
 
-- `--to oklab` expects sRGB hex colors, with or without a leading `#`,
-  in either 3-digit (`#f0a`) or 6-digit (`#ff00aa`) form.
-- `--to srgb` expects OKLab triples, either as `oklab(L a b)` or as
-  three bare numbers separated by spaces or commas.
+- `--to oklab` and `--to oklch` expect sRGB hex colors, with or
+  without a leading `#`, in either 3-digit (`#f0a`) or 6-digit
+  (`#ff00aa`) form.
+- `--to srgb` expects an `oklab(L a b)` or `oklch(L C H)` line, or
+  three bare numbers separated by spaces or commas (bare numbers are
+  read as OKLab).
 
 ## Running tests
 
@@ -67,8 +85,8 @@ $ python -m unittest discover
 
 Early. The core sRGB <-> OKLab math is implemented and matches the
 reference values published alongside the OKLab color space, and is
-covered by unit tests. Not yet covered: OKLCH (polar OKLab) and
-gamut clipping options.
+covered by unit tests. OKLCH (polar OKLab) is supported. Not yet
+covered: gamut clipping options.
 
 ## License
 

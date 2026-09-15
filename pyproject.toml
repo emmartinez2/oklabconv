@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "oklabconv"
 version = "0.1.0"
-description = "Convert colors between sRGB hex and OKLab"
+description = "Convert colors between sRGB hex, OKLab, and OKLCH"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
